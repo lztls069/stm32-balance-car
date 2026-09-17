@@ -2,6 +2,7 @@
 #include "motor.h"
 #include "tim.h"
 #include "mpu6050.h"
+#include "encoder.h"
 #include "inv_mpu.h"
 
 //传感器数据变量
@@ -12,11 +13,11 @@ short accx, accy, accz;
 
 //中间变量
 int Vertical_out, Velocity_out, Turn_out, Target_speed, Target_turn, MOTO1, MOTO2;
-float Med_Angle;//机械中值
+float Med_Angle = 0.2;//机械中值
 
-//PID参数
-float Vertical_Kp, Vertical_Kd;
-float Velocity_Kp, Velocity_Ki;
+//PID参数 Velocity_Kp = -0.8, Velocity_Ki = -0.004
+float Vertical_Kp = -3.9, Vertical_Kd = -0.0102;
+float Velocity_Kp = -1, Velocity_Ki = -0.005;
 float Turn_Kp, Turn_Kd;
 uint8_t stop = 0; //速度环积分清零标志
 
@@ -48,6 +49,10 @@ int Velocity(int Target, int encoder_L, int encoder_R)
     if(stop == 1) Encoder_S = 0, stop = 0;
     //5、速度环计算 计算PI输出 = Kp * 滤波后误差 + Ki * 积分项
     temp=Velocity_Kp*Err_LowOut+Velocity_Ki*Encoder_S;
+    //6、限制temp
+    if (temp > 10)  temp = 10;
+    if (temp < -10) temp = -10;
+
     return temp;
 }
 

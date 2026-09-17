@@ -33,6 +33,7 @@
 #include "stdio.h"
 #include "sr04.h"
 #include "motor.h"
+#include "pid.h"
 #include "encoder.h"
 /* USER CODE END Includes */
 
@@ -111,34 +112,39 @@ int main(void)
   OLED_Init();
   MPU_Init();
   mpu_dmp_init();
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL); // 启动定时器3的编码器模式
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL); // 启动定时器4的编码器模式
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // 启动定时器1的PWM输出
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1的PWM输出
   Load(0, 0); // 设置电机A和电机B的PWM占空比为0
+  OLED_NewFrame();
+  sprintf((char*)display_buf, "Init Success");
+  OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+  OLED_ShowFrame();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(10);
     // Get_Distance();
-    // OLED_NewFrame();
-    // mpu_dmp_get_data(&pitch, &roll, &yaw);
-    // sprintf((char*)display_buf, "Pitch: %.2f", pitch);
-    // OLED_PrintString(4, 0, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    // sprintf((char*)display_buf, "Roll: %.2f", roll);
-    // OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    // sprintf((char*)display_buf, "Yaw: %.2f", yaw);
-    // OLED_PrintString(4, 24, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    OLED_NewFrame();
+    mpu_dmp_get_data(&pitch, &roll, &yaw);
+    sprintf((char*)display_buf, "Pitch: %.2f", pitch);
+    OLED_PrintString(4, 0, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    sprintf((char*)display_buf, "Roll: %.2f", roll);
+    OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    sprintf((char*)display_buf, "Yaw: %.2f", yaw);
+    OLED_PrintString(4, 24, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
     // sprintf((char*)display_buf, "Distance:%.2fcm", distance);
     // OLED_PrintString(4, 36, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    // sprintf((char*)display_buf, "Left: %d", Encoder_Left);
-    // OLED_PrintString(4, 48, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    // sprintf((char*)display_buf, "Right: %d", Encoder_Right);
-    // OLED_PrintString(4, 60, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    // OLED_ShowFrame();
+    sprintf((char*)display_buf, "Left: %d", Encoder_Left);
+    OLED_PrintString(4, 36, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    sprintf((char*)display_buf, "Right: %d", Encoder_Right);
+    OLED_PrintString(4, 48, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    OLED_ShowFrame();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -50,6 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/sr04.c
     Core/Src/motor.c
     Core/Src/encoder.c
+    Core/Src/pid.c
     MyCode/Src/IIC.c
     MyCode/Src/inv_mpu_dmp_motion_driver.c
     MyCode/Src/inv_mpu.c

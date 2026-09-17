@@ -1,5 +1,6 @@
 #include "sr04.h"
 #include "tim.h"
+#include "pid.h"
 
 uint32_t count; // 定义全局变量存储计数值
 float distance; // 定义全局变量存储距离值
@@ -16,6 +17,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
             distance = (count * 0.0343) / 2; // 计算距离，单位为厘米
             // 在这里可以使用distance变量进行后续处理，例如显示在OLED上
         }
+    }
+
+    if(GPIO_Pin == GPIO_PIN_5){
+        Control();
     }
 }
 
