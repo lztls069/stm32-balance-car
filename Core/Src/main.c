@@ -54,8 +54,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-float pitch, roll, yaw;
-int Encoder_Left, Encoder_Right;
+extern float pitch, roll, yaw;
+extern int Encoder_Left, Encoder_Right;
 uint8_t display_buf[32];
 extern float distance; // 声明外部变量distance
 uint32_t sys_tick;
@@ -115,7 +115,7 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL); // 启动定时器4的编码器模式
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // 启动定时器1的PWM输出
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1的PWM输出
-  Load(0, 0); // 设置电机A和电机B的PWM占空比为15
+  Load(0, 0); // 设置电机A和电机B的PWM占空比为0
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,23 +123,22 @@ int main(void)
   while (1)
   {
     HAL_Delay(10);
-    Read();
-    Get_Distance();
-    OLED_NewFrame();
-    mpu_dmp_get_data(&pitch, &roll, &yaw);
-    sprintf((char*)display_buf, "Pitch: %.2f", pitch);
-    OLED_PrintString(4, 0, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    sprintf((char*)display_buf, "Roll: %.2f", roll);
-    OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    sprintf((char*)display_buf, "Yaw: %.2f", yaw);
-    OLED_PrintString(4, 24, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    sprintf((char*)display_buf, "Distance:%.2fcm", distance);
-    OLED_PrintString(4, 36, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    sprintf((char*)display_buf, "Left: %d", Encoder_Left);
-    OLED_PrintString(4, 48, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    sprintf((char*)display_buf, "Right: %d", Encoder_Right);
-    OLED_PrintString(4, 60, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
-    OLED_ShowFrame();
+    // Get_Distance();
+    // OLED_NewFrame();
+    // mpu_dmp_get_data(&pitch, &roll, &yaw);
+    // sprintf((char*)display_buf, "Pitch: %.2f", pitch);
+    // OLED_PrintString(4, 0, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // sprintf((char*)display_buf, "Roll: %.2f", roll);
+    // OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // sprintf((char*)display_buf, "Yaw: %.2f", yaw);
+    // OLED_PrintString(4, 24, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // sprintf((char*)display_buf, "Distance:%.2fcm", distance);
+    // OLED_PrintString(4, 36, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // sprintf((char*)display_buf, "Left: %d", Encoder_Left);
+    // OLED_PrintString(4, 48, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // sprintf((char*)display_buf, "Right: %d", Encoder_Right);
+    // OLED_PrintString(4, 60, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
+    // OLED_ShowFrame();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -187,14 +186,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Read(){
-  if(uwTick - sys_tick < 10){ // 每隔1秒读取一次编码器计数值
-    return;
-  }
-  sys_tick = uwTick;
-  Encoder_Left = Read_speed(&htim2); // 读取定时器2的编码器计数值
-  Encoder_Right = -Read_speed(&htim4); // 读取定时器4的编码器计数值
-}
+
 /* USER CODE END 4 */
 
 /**

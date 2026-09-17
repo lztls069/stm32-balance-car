@@ -1,6 +1,8 @@
 #include "motor.h"
 #include "tim.h"
 #include <stdlib.h>
+#define PWM_MAX 100
+#define PWM_MIN -100
 
 void Load(int motorA, int motorB) {
     if (motorA < 0) {
@@ -20,4 +22,9 @@ void Load(int motorA, int motorB) {
     }
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, abs(motorA)); // 设置电机A的PWM占空比
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, abs(motorB)); // 设置电机B的PWM占空比
+}
+
+void Limit(int *moto1, int *moto2){
+    *moto1 = (*moto1 > PWM_MAX) ? PWM_MAX : ((*moto1 < PWM_MIN) ? PWM_MIN : *moto1);
+    *moto2 = (*moto2 > PWM_MAX) ? PWM_MAX : ((*moto2 < PWM_MIN) ? PWM_MIN : *moto2);
 }
