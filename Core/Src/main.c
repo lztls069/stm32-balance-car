@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "stm32f1xx_hal_uart.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -35,6 +36,7 @@
 #include "motor.h"
 #include "pid.h"
 #include "encoder.h"
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +57,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern uint8_t rx_buf[2];
 extern float pitch, roll, yaw;
 extern int Encoder_Left, Encoder_Right;
 uint8_t display_buf[32];
@@ -119,6 +122,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // 启动定时器1的PWM输出
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1的PWM输出
   Load(0, 0); // 设置电机A和电机B的PWM占空比为0
+  HAL_UART_Receive_IT(&huart3, rx_buf, 1);
   OLED_NewFrame();
   sprintf((char*)display_buf, "Init Success");
   OLED_PrintString(4, 12, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
@@ -131,7 +135,6 @@ int main(void)
   {
     // Get_Distance();
     OLED_NewFrame();
-    mpu_dmp_get_data(&pitch, &roll, &yaw);
     sprintf((char*)display_buf, "Pitch: %.2f", pitch);
     OLED_PrintString(4, 0, (char*)display_buf, &font16x16, OLED_COLOR_NORMAL);
     sprintf((char*)display_buf, "Roll: %.2f", roll);

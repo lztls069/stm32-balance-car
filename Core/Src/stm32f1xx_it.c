@@ -19,6 +19,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f1xx_hal_uart.h"
+#include <stdint.h>
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -41,7 +43,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+uint8_t rx_buf[2], Bluetooth_data;
+uint8_t fore, back, right, left;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -236,7 +239,23 @@ void USART3_IRQHandler(void)
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
-
+  Bluetooth_data = rx_buf[0];
+  if (Bluetooth_data == 0x01) {
+    fore = 1, back = 0, right = 0, left = 0;
+  }
+  else if (Bluetooth_data == 0x05) {
+    fore = 0, back = 1, right = 0, left = 0;
+  }
+  else if (Bluetooth_data == 0x03) {
+    fore = 0, back = 0, right = 1, left = 0;
+  }
+  else if (Bluetooth_data == 0x07) {
+    fore = 0, back = 0, right = 0, left = 1;
+  }
+  else {
+    fore = 0, back = 0, right = 0, left = 0;
+  }
+  HAL_UART_Receive_IT(&huart3, rx_buf, 1);
   /* USER CODE END USART3_IRQn 1 */
 }
 
