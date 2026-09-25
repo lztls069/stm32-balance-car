@@ -37,8 +37,14 @@ float Velocity_Kp = -1, Velocity_Ki = -0.005;
  *    这里用 Turn_Sign = -1 配 Turn_Kd > 0 得到负反馈（实测原 Turn_Sign=+1 时车以 ±12° 剧振）。
  * 2) 方向：本车实测 gyroz 为正 = 实际左转（与旧笔记"向右为正"相反）。稳态角速度 ∝ -Kp/Kd*Target_turn，
  *    要"按右键右转"（Target_turn>0 时 gyroz<0）必须 Kp 与 Kd 同号，故 Kp > 0。翻 Kp 不影响阻尼。 */
-float Turn_Kp = 0.2, Turn_Kd = 0.02;
-int Turn_Out_Max = 40, Turn_Sign = -1;
+/* 参数回到原版组合：实测原版的阻尼项能抑制"平衡时自己转"，且方向正确。
+ * 之前把 Turn_Sign 从 +1 改成 -1 是错的——那会把 Kd 项的符号一起翻转，把阻尼
+ * 变成正反馈（乘以 6.7 倍），于是静止时被推着持续左转、同时大幅振荡。
+ * 出错原因：推导时误信了旧笔记里"Yaw 向右为正"那句，实测相反。 */
+float Turn_Kp = 0.05, Turn_Kd = 0.003;
+/* 独立限幅保留作安全网：原版没有限幅，差分可能顶到电机的 ±100 上拖垮直立环。
+ * 原版参数下满指令 Turn_out 只有 0.05*150=7.5，正常操作碰不到这个限幅。 */
+int Turn_Out_Max = 40, Turn_Sign = 1;
 /* 直行航向保持：Target_turn==0 时用 DMP yaw 把车拉回参考航向。
  * 纯电池供电、不插调试线时车会肉眼可见地持续左转（机械偏置 + 轮胎黏滞），
  * 而作用在角速度上的 Turn_Kd 在低速段被整数截断成 0，拦不住它——必须作用在角度上。
@@ -47,7 +53,7 @@ float Turn_Yaw_Kp = 1.0;     //PWM / 度
 float Turn_Yaw_Kd = 0.06;    //航向环自身的角速度阻尼（被控对象是双积分，纯 P 必然振）
 float Turn_Yaw_Dead = 1.5;   //死区，度
 int   Turn_Yaw_Max = 20;     //航向修正独立限幅
-uint8_t Turn_Yaw_Enable = 1; //0 = 暂停航向保持（静止诊断用）
+uint8_t Turn_Yaw_Enable = 0; //先关闭航向保持：原版转向环本身就能抑制静止自转
 uint8_t motor_enable = 1; //0 = 强制电机输出为 0（SWD STOP）
 uint8_t tune_manual = 0;  //1 = Target_speed/Target_turn 交给 tune 模块，遥控按键失效
 uint8_t stop = 0; //速度环积分清零标志
