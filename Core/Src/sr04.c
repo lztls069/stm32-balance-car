@@ -1,6 +1,7 @@
 #include "sr04.h"
 #include "tim.h"
 #include "pid.h"
+#include "tune.h"
 
 uint32_t count; // 定义全局变量存储计数值
 float distance; // 定义全局变量存储距离值
@@ -20,7 +21,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     }
 
     if(GPIO_Pin == GPIO_PIN_5){
+        Tune_IsrBegin();
         Control();
+        Tune_IsrEnd();
     }
 }
 

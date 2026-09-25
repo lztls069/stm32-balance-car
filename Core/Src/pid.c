@@ -30,7 +30,15 @@ float Med_Angle = -0.1;//机械中值
 //PID参数 Velocity_Kp = -0.8, Velocity_Ki = -0.004
 float Vertical_Kp = -3.9, Vertical_Kd = -0.0102;
 float Velocity_Kp = -1, Velocity_Ki = -0.005;
-float Turn_Kp = 0.05, Turn_Kd;
+/* 转向环：Turn_out = Turn_Sign * (Turn_Kp * Target_turn + Turn_Kd * gyroz)，再钳到 +-Turn_Out_Max
+ * Turn_Kd 是常开阻尼增益，运行期不再被 Control() 改写（原来既当增益又当模式开关，根本调不动）。
+ * 符号必须成对：实测 d(gyroz)/dt = p * Turn_out 中 p>0（给 -23 的转向输出，100ms 内 gyroz
+ * 从 +12 冲到 -1137），所以 Turn_Sign 必须为 -1，否则 Turn_Kd 变成正反馈；Kp 与 Kd 必须异号，
+ * 否则按住右键会变成左转。整环符号只由 Turn_Sign 一处翻转，标定时只改这一个数。 */
+float Turn_Kp = -0.2, Turn_Kd = 0.02;
+int Turn_Out_Max = 40, Turn_Sign = -1;
+uint8_t motor_enable = 1; //0 = 强制电机输出为 0（SWD STOP）
+uint8_t tune_manual = 0;  //1 = Target_speed/Target_turn 交给 tune 模块，遥控按键失效
 uint8_t stop = 0; //速度环积分清零标志
 
 //直立环 mpu6050已经滤过波不用软件滤波
@@ -72,9 +80,12 @@ int Velocity(int Target, int encoder_L, int encoder_R)
 //输入：期望角度，角速度
 int Turn(float Target, float gyro_Z)
 {
-    int temp;
-    temp = Turn_Kp * Target + Turn_Kd * gyro_Z;
-    return temp;
+    float temp;
+    temp = (float)Turn_Sign * (Turn_Kp * Target + Turn_Kd * gyro_Z);
+    /* 必须独立限幅：原来不限幅，差分直接顶到左右电机的 +-100 上，直立环会被拖垮 */
+    if (temp > (float)Turn_Out_Max) temp = (float)Turn_Out_Max;
+    if (temp < -(float)Turn_Out_Max) temp = -(float)Turn_Out_Max;
+    return (int)temp;
 }
 
 //控制
@@ -95,29 +106,30 @@ void Control(){
     }
 
     //遥控 前进
-    if (fore == 0 && back == 0) {
-        Target_speed = 0;
-    }
-    if (fore == 1) {
-        Target_speed++;
-    }
-    if (back == 1) {
-        Target_speed--;
+    if (tune_manual == 0) {
+        if (fore == 0 && back == 0) {
+            Target_speed = 0;
+        }
+        if (fore == 1) {
+            Target_speed++;
+        }
+        if (back == 1) {
+            Target_speed--;
+        }
     }
     Target_speed = Target_speed > SPEED_Y ? SPEED_Y : (Target_speed < (-SPEED_Y) ? (-SPEED_Y) : Target_speed);//限制
 
     //左右
-    if (right == 0 && left == 0) {
-        Target_turn = 0;
-        Turn_Kd = 0.003;//开启转向约束
-    }
-    if (right == 1) {
-        Target_turn += 30;
-        Turn_Kd = 0;//关闭转向约束
-    }
-    if (left == 1) {
-        Target_turn -= 30;
-        Turn_Kd = 0;
+    if (tune_manual == 0) {
+        if (right == 0 && left == 0) {
+            Target_turn = 0;
+        }
+        if (right == 1) {
+            Target_turn += 30;
+        }
+        if (left == 1) {
+            Target_turn -= 30;
+        }
     }
     Target_turn = Target_turn > SPEED_Z ? SPEED_Z : (Target_turn < (-SPEED_Z) ? (-SPEED_Z) : Target_turn);//限制
 
@@ -129,5 +141,9 @@ void Control(){
     MOTO1 = PWM_out - Turn_out; // 计算电机1的输出
     MOTO2 = PWM_out + Turn_out; // 计算电机2的输出
     Limit(&MOTO1, &MOTO2); // 限制电机输出范围
+    if (motor_enable == 0) { //SWD STOP：下一拍即生效
+        MOTO1 = 0;
+        MOTO2 = 0;
+    }
     Load(MOTO1, MOTO2); // 将计算结果加载到电机驱动器
 }

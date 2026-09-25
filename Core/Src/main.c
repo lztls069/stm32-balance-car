@@ -36,6 +36,7 @@
 #include "motor.h"
 #include "pid.h"
 #include "encoder.h"
+#include "tune.h"
 #include <stdint.h>
 /* USER CODE END Includes */
 
@@ -115,8 +116,7 @@ int main(void)
   OLED_Init();
   MPU_Init();
   mpu_dmp_init();
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  Tune_Init(); // 初始化调参 mailbox，并使能 EXTI9_5(MPU6050 INT -> Control())
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL); // 启动定时器3的编码器模式
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL); // 启动定时器4的编码器模式
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // 启动定时器1的PWM输出
