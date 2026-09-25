@@ -71,3 +71,13 @@ powershell -ExecutionPolicy Bypass -File tools\tune\swd.ps1 report -In build\tun
 - **PS 5.1 解析 .ps1**：无 BOM 的 UTF-8 会被当成 GBK，中文注释会吞掉换行导致语法错误；
   本目录脚本都带 UTF-8 BOM。
 - 调参固件必须用 Release(`-Os`) 构建，Debug(`-O0`) 已占 61.1KB/64KB Flash。
+
+## ⚠ 极性结论更正（2026-09-25 晚）
+
+本文档上面"已定档结论"里关于极性/方向的推导是**错的**：
+
+- `Turn_Sign` 从 +1 翻成 -1 会把 Kd 项符号一起翻转 → 阻尼变正反馈（乘 6.7 倍）→
+  平衡时被推着持续左转并大幅振荡。
+- **当前定档 = 原版参数**：`Turn_Kp=0.05`、`Turn_Kd=0.003`、`Turn_Out_Max=40`、`Turn_Sign=1`
+  （提交 `3c08bd9`），直行航向保持 `Turn_Yaw_Enable=0` 关闭。
+- 定位手段：`Turn_Out_Max=0` 关掉整个转向输出，若抖动消失即可确定问题在转向代码而非平台。
