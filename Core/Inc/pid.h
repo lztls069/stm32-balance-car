@@ -14,6 +14,7 @@ extern float Velocity_Kp, Velocity_Ki;
 extern float Turn_Kp, Turn_Kd;
 extern int   Turn_Out_Max, Turn_Sign;
 extern float Turn_Yaw_Kp, Turn_Yaw_Dead;
+extern float Turn_Yaw_Kd;
 extern int   Turn_Yaw_Max;
 extern uint8_t Turn_Yaw_Enable;
 extern int   Vertical_out, Velocity_out, Turn_out, Target_speed, Target_turn, MOTO1, MOTO2;

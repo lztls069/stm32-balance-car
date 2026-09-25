@@ -43,7 +43,8 @@ int Turn_Out_Max = 40, Turn_Sign = -1;
  * 纯电池供电、不插调试线时车会肉眼可见地持续左转（机械偏置 + 轮胎黏滞），
  * 而作用在角速度上的 Turn_Kd 在低速段被整数截断成 0，拦不住它——必须作用在角度上。
  * 只有偏出死区才给差速，并用独立限幅，避免和平衡环抢权威。 */
-float Turn_Yaw_Kp = 2.0;     //PWM / 度
+float Turn_Yaw_Kp = 1.0;     //PWM / 度
+float Turn_Yaw_Kd = 0.06;    //航向环自身的角速度阻尼（被控对象是双积分，纯 P 必然振）
 float Turn_Yaw_Dead = 1.5;   //死区，度
 int   Turn_Yaw_Max = 20;     //航向修正独立限幅
 uint8_t Turn_Yaw_Enable = 1; //0 = 暂停航向保持（静止诊断用）
@@ -107,6 +108,9 @@ int Turn(float Target, float gyro_Z)
             if (err < -180.0f) err += 360.0f;
             if (err > Turn_Yaw_Dead)       trim = Turn_Yaw_Kp * (err - Turn_Yaw_Dead);
             else if (err < -Turn_Yaw_Dead) trim = Turn_Yaw_Kp * (err + Turn_Yaw_Dead);
+            /* 阻尼项：与上面同号（乘 Turn_Sign 后对偏航角速度是负反馈）。
+             * ζ = p*Kd/(2*sqrt(p*Kyaw))，p≈450 时 Kyaw=1.0/Kd=0.06 得 ζ≈0.64。 */
+            trim += Turn_Yaw_Kd * gyro_Z;
             if (trim > (float)Turn_Yaw_Max)  trim = (float)Turn_Yaw_Max;
             if (trim < -(float)Turn_Yaw_Max) trim = -(float)Turn_Yaw_Max;
         }
