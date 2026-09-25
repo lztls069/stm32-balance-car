@@ -81,3 +81,11 @@ powershell -ExecutionPolicy Bypass -File tools\tune\swd.ps1 report -In build\tun
 - **当前定档 = 原版参数**：`Turn_Kp=0.05`、`Turn_Kd=0.003`、`Turn_Out_Max=40`、`Turn_Sign=1`
   （提交 `3c08bd9`），直行航向保持 `Turn_Yaw_Enable=0` 关闭。
 - 定位手段：`Turn_Out_Max=0` 关掉整个转向输出，若抖动消失即可确定问题在转向代码而非平台。
+
+### 最终定档（用户实物复核后，2026-09-25 晚）
+
+- **`gyroz` 正 = 右转**（旧笔记正确；此前"正 = 左转"的更正作废——那次是把前后看反了）。
+- 阻尼侧以实测为准：`Turn_Sign=+1` 配 `Turn_Kd>0`（原版那一侧）才不抖、能压住静止自转。
+- `Kp` 与 `Kd` 必须**异号**（方向由两者相对符号决定）；`Kp` 只作用于指令通道，
+  静止时 `Target_turn=0`，所以调 `Kp` 不会影响静止表现。
+- 最终：`Turn_Kp=-0.05`、`Turn_Kd=0.003`、`Turn_Out_Max=40`、`Turn_Sign=1`，航向保持关闭。
