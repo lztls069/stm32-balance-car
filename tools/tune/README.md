@@ -51,8 +51,10 @@ powershell -ExecutionPolicy Bypass -File tools\tune\swd.ps1 report -In build\tun
 
 ## 已定档结论（2026-09-25）
 
-- 极性：`Turn_Sign` 必须为 **-1**，且 `Kp` 与 `Kd` 必须**异号**（推导见 `过程笔记.md`）。
-- 参数：`Turn_Kp=-0.2`、`Turn_Kd=0.02`、`Turn_Out_Max=40`、`Turn_Sign=-1`。
+- 极性/方向：`Turn_Sign` 必须为 **-1**（决定 `Kd` 是阻尼还是正反馈），
+  `Kp` 与 `Kd` 必须**同号**（决定按键方向）；推导见 `过程笔记.md`。
+  本车实测 **`gyroz` 为正 = 实际左转**（与旧笔记相反），故要"按右键右转"必须 `Kp>0`。
+- 参数：`Turn_Kp=+0.2`、`Turn_Kd=0.02`、`Turn_Out_Max=40`、`Turn_Sign=-1`。
   满指令约 37 dps（约 2.4s 转 90°），上升 40ms，转向时 roll 扰动约 5°。
 - **12~16Hz 振铃不来自转向环**：把 `Turn_Kd` 设为 0（完全没有偏航反馈）后仍有 10.4Hz/732% 的振铃，
   且 roll 同时摆 ±3°、平衡环公共模 PWM 在 ±15 极限环。差速转向会削弱平衡环的有效权威；

@@ -39,6 +39,7 @@
 #define TUNE_CMD_STEP     4   /* 武装采集，带转向阶跃 */
 #define TUNE_CMD_CLRTRIAL 5   /* 清空试次表 */
 #define TUNE_CMD_CLRSTAT  6   /* 清空耗时/错误计数 */
+#define TUNE_CMD_IDLE_DIAG 7  /* 静止诊断：arg1 为积分拍数(<=6000)，结果写 trial[19] */
 
 /* 采集通道索引 */
 #define TUNE_CH_GYROZ  0
@@ -59,6 +60,10 @@
 #define TUNE_ST_FULL   0x02u
 #define TUNE_ST_FELL   0x04u
 #define TUNE_ST_MANUAL 0x08u
+#define TUNE_ST_IDLEACT 0x10u   /* 静止诊断进行中 */
+
+/* trial[TUNE_TRIAL_MAX-1] 被静止诊断占用（行 19），列含义：
+ * 0=sum(gyroz)  1=sum(enc_l)  2=sum(enc_r)  3=拍数  4=yaw起始x100  5=yaw结束x100  6=完成标志 */
 
 /* 试次行 flags 位 */
 #define TUNE_TR_FELL     0x01    /* 采集期间倒地 */

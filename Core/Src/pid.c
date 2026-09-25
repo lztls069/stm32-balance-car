@@ -32,10 +32,12 @@ float Vertical_Kp = -3.9, Vertical_Kd = -0.0102;
 float Velocity_Kp = -1, Velocity_Ki = -0.005;
 /* 转向环：Turn_out = Turn_Sign * (Turn_Kp * Target_turn + Turn_Kd * gyroz)，再钳到 +-Turn_Out_Max
  * Turn_Kd 是常开阻尼增益，运行期不再被 Control() 改写（原来既当增益又当模式开关，根本调不动）。
- * 符号必须成对：实测 d(gyroz)/dt = p * Turn_out 中 p>0（给 -23 的转向输出，100ms 内 gyroz
- * 从 +12 冲到 -1137），所以 Turn_Sign 必须为 -1，否则 Turn_Kd 变成正反馈；Kp 与 Kd 必须异号，
- * 否则按住右键会变成左转。整环符号只由 Turn_Sign 一处翻转，标定时只改这一个数。 */
-float Turn_Kp = -0.2, Turn_Kd = 0.02;
+ * 1) 稳定性：实测 d(gyroz)/dt = p * Turn_out 中 p>0（给 -23 的转向输出，100ms 内 gyroz 从 +12
+ *    冲到 -1137），所以 Turn_Sign*Turn_Kd 必须为负，取 Turn_Sign = -1、Turn_Kd > 0 是正反馈→
+ *    这里用 Turn_Sign = -1 配 Turn_Kd > 0 得到负反馈（实测原 Turn_Sign=+1 时车以 ±12° 剧振）。
+ * 2) 方向：本车实测 gyroz 为正 = 实际左转（与旧笔记"向右为正"相反）。稳态角速度 ∝ -Kp/Kd*Target_turn，
+ *    要"按右键右转"（Target_turn>0 时 gyroz<0）必须 Kp 与 Kd 同号，故 Kp > 0。翻 Kp 不影响阻尼。 */
+float Turn_Kp = 0.2, Turn_Kd = 0.02;
 int Turn_Out_Max = 40, Turn_Sign = -1;
 uint8_t motor_enable = 1; //0 = 强制电机输出为 0（SWD STOP）
 uint8_t tune_manual = 0;  //1 = Target_speed/Target_turn 交给 tune 模块，遥控按键失效

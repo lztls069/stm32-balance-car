@@ -37,6 +37,9 @@ static int16_t  s_cmd_now;       /* 斜坡发生器当前目标 */
 static int16_t  s_ramp_step;     /* 每拍变化量，0 = 硬阶跃 */
 static uint8_t  s_armed;
 static uint8_t  s_fell;
+static uint16_t s_diag_len;      /* 静止诊断剩余拍数，0 = 未在跑 */
+static int32_t  s_sum_g, s_sum_el, s_sum_er;
+static float    s_yaw0;
 
 static int32_t iabs32(int32_t v)
 {
@@ -246,6 +249,15 @@ static void tune_handle(int32_t c)
         g_tune.err_count  = 0u;
         break;
 
+    case TUNE_CMD_IDLE_DIAG:
+        /* 只积分，不碰 Target_turn / Target_speed：车按平时那样平衡，用来分辨
+         * "陀螺零偏" 还是 "真的在偏航/侧滑" */
+        s_diag_len = (uint16_t)clamp_i32(TUNE_ARG1_SAMPLES(g_tune.arg1), 1, 6000);
+        s_sum_g = 0; s_sum_el = 0; s_sum_er = 0;
+        s_yaw0 = yaw;
+        g_tune.state |= TUNE_ST_IDLEACT;
+        break;
+
     default:
         g_tune.err_count++;
         break;
@@ -310,6 +322,25 @@ void Tune_IsrEnd(void)
                 Target_turn  = 0;
                 Target_speed = 0;
             }
+        }
+    }
+
+    /* 静止诊断：分辨"陀螺零偏"与"真的在偏航"——真偏航则左右轮必然有差速累积 */
+    if (s_diag_len) {
+        s_sum_g  += (int32_t)gyroz;
+        s_sum_el += Encoder_Left;
+        s_sum_er += Encoder_Right;
+        s_diag_len--;
+        if (s_diag_len == 0u) {
+            uint16_t r = (uint16_t)(TUNE_TRIAL_MAX - 1u);
+            g_tune.trial[r][0] = s_sum_g;
+            g_tune.trial[r][1] = s_sum_el;
+            g_tune.trial[r][2] = s_sum_er;
+            g_tune.trial[r][3] = TUNE_ARG1_SAMPLES(g_tune.arg1);
+            g_tune.trial[r][4] = (int32_t)(s_yaw0 * 100.0f);
+            g_tune.trial[r][5] = (int32_t)(yaw * 100.0f);
+            g_tune.trial[r][6] = 1;
+            g_tune.state &= ~TUNE_ST_IDLEACT;
         }
     }
 
