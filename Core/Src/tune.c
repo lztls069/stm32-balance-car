@@ -256,6 +256,7 @@ static void tune_handle(int32_t c)
         s_sum_g = 0; s_sum_el = 0; s_sum_er = 0;
         s_yaw0 = yaw;
         g_tune.state |= TUNE_ST_IDLEACT;
+        Turn_Yaw_Enable = 0u;   /* 诊断期间关掉航向保持，否则测不到真实漂移 */
         break;
 
     default:
@@ -341,6 +342,7 @@ void Tune_IsrEnd(void)
             g_tune.trial[r][5] = (int32_t)(yaw * 100.0f);
             g_tune.trial[r][6] = 1;
             g_tune.state &= ~TUNE_ST_IDLEACT;
+            Turn_Yaw_Enable = 1u;
         }
     }
 

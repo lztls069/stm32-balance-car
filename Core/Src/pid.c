@@ -39,6 +39,14 @@ float Velocity_Kp = -1, Velocity_Ki = -0.005;
  *    要"按右键右转"（Target_turn>0 时 gyroz<0）必须 Kp 与 Kd 同号，故 Kp > 0。翻 Kp 不影响阻尼。 */
 float Turn_Kp = 0.2, Turn_Kd = 0.02;
 int Turn_Out_Max = 40, Turn_Sign = -1;
+/* 直行航向保持：Target_turn==0 时用 DMP yaw 把车拉回参考航向。
+ * 纯电池供电、不插调试线时车会肉眼可见地持续左转（机械偏置 + 轮胎黏滞），
+ * 而作用在角速度上的 Turn_Kd 在低速段被整数截断成 0，拦不住它——必须作用在角度上。
+ * 只有偏出死区才给差速，并用独立限幅，避免和平衡环抢权威。 */
+float Turn_Yaw_Kp = 2.0;     //PWM / 度
+float Turn_Yaw_Dead = 1.5;   //死区，度
+int   Turn_Yaw_Max = 20;     //航向修正独立限幅
+uint8_t Turn_Yaw_Enable = 1; //0 = 暂停航向保持（静止诊断用）
 uint8_t motor_enable = 1; //0 = 强制电机输出为 0（SWD STOP）
 uint8_t tune_manual = 0;  //1 = Target_speed/Target_turn 交给 tune 模块，遥控按键失效
 uint8_t stop = 0; //速度环积分清零标志
@@ -82,8 +90,31 @@ int Velocity(int Target, int encoder_L, int encoder_R)
 //输入：期望角度，角速度
 int Turn(float Target, float gyro_Z)
 {
-    float temp;
-    temp = (float)Turn_Sign * (Turn_Kp * Target + Turn_Kd * gyro_Z);
+    static float yaw_ref = 0.0f;
+    static uint8_t yaw_ref_ok = 0;
+    float temp, trim = 0.0f;
+
+    if (Target == 0.0f) {
+        /* 直行：把航向偏差算成一个慢差速修正。yaw 正 = 实际左转（见上文），
+         * 所以偏到左边(err>0)给正 trim -> 产生右转修正。 */
+        if ((Turn_Yaw_Enable != 0u) && (yaw_ref_ok == 0u)) {
+            yaw_ref = yaw;
+            yaw_ref_ok = 1u;
+        }
+        if (Turn_Yaw_Enable != 0u) {
+            float err = yaw - yaw_ref;
+            if (err > 180.0f)  err -= 360.0f;
+            if (err < -180.0f) err += 360.0f;
+            if (err > Turn_Yaw_Dead)       trim = Turn_Yaw_Kp * (err - Turn_Yaw_Dead);
+            else if (err < -Turn_Yaw_Dead) trim = Turn_Yaw_Kp * (err + Turn_Yaw_Dead);
+            if (trim > (float)Turn_Yaw_Max)  trim = (float)Turn_Yaw_Max;
+            if (trim < -(float)Turn_Yaw_Max) trim = -(float)Turn_Yaw_Max;
+        }
+    } else {
+        yaw_ref_ok = 0u;   /* 转向中不保持，松开后重新捕获参考航向 */
+    }
+
+    temp = (float)Turn_Sign * (Turn_Kp * Target + Turn_Kd * gyro_Z + trim);
     /* 必须独立限幅：原来不限幅，差分直接顶到左右电机的 +-100 上，直立环会被拖垮 */
     if (temp > (float)Turn_Out_Max) temp = (float)Turn_Out_Max;
     if (temp < -(float)Turn_Out_Max) temp = -(float)Turn_Out_Max;
